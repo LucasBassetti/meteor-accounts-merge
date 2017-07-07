@@ -19,6 +19,19 @@ Meteor.methods({
     var oldAccount = Meteor.users.findOne(oldAccountId);
     var newAccount = Meteor.users.findOne(this.userId);
 
+    var createdAt = new Date(newAccount.createdAt).getTime();
+    var limitDate = new Date().getTime() - 60000;
+
+    console.log(createdAt);
+    console.log(limitDate);
+    console.log(createdAt < limitDate);
+
+    if (oldAccount._id !== newAccount._id && createdAt < limitDate) {
+      console.log('Email already exist in another account');
+      throw new Meteor.Error(400, 'Email already exist in another account');
+      return false;
+    }
+
     // Get the names of the registered oauth services from the Accounts package
     _services = Accounts.oauth.serviceNames();
 
@@ -50,13 +63,6 @@ Meteor.methods({
           console.log('error', e.toString());
         }
       }
-    }
-    // Mark the losing user as merged, and to which user it was merged with.
-    // mergedWith holds the _id of the winning account.
-    try {
-      Meteor.users.update(newAccount._id, {$set: {mergedWith: oldAccountId}});
-    } catch (e) {
-      console.log('error', e.toString());
     }
 
     // Run the server side onMerge() hook if it exists.
